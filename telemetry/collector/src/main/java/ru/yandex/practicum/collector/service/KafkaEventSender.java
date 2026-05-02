@@ -46,31 +46,33 @@ public class KafkaEventSender {
         hubProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, HubEventSerializer.class);
         hubProducer = new KafkaProducer<>(hubProps);
 
-        log.info("Kafka producers инициализированы. bootstrap-servers={}", bootstrapServers);
+        log.info("Kafka producers initialized. bootstrap-servers={}", bootstrapServers);
     }
 
     public void sendSensorEvent(SensorEventAvro event, String key) {
+        log.debug("Sending sensor event to topic {}: {}", sensorsTopic, event);
         ProducerRecord<String, SensorEventAvro> record =
                 new ProducerRecord<>(sensorsTopic, key, event);
         sensorProducer.send(record, (metadata, ex) -> {
             if (ex == null) {
-                log.info("Sensor event отправлен: topic={}, partition={}, offset={}",
+                log.info("Sensor event sent: topic={}, partition={}, offset={}",
                         metadata.topic(), metadata.partition(), metadata.offset());
             } else {
-                log.error("Ошибка отправки sensor event", ex);
+                log.error("Error sending sensor event", ex);
             }
         });
     }
 
     public void sendHubEvent(HubEventAvro event, String key) {
+        log.debug("Sending hub event to topic {}: {}", hubsTopic, event);
         ProducerRecord<String, HubEventAvro> record =
                 new ProducerRecord<>(hubsTopic, key, event);
         hubProducer.send(record, (metadata, ex) -> {
             if (ex == null) {
-                log.info("Hub event отправлен: topic={}, partition={}, offset={}",
+                log.info("Hub event sent: topic={}, partition={}, offset={}",
                         metadata.topic(), metadata.partition(), metadata.offset());
             } else {
-                log.error("Ошибка отправки hub event", ex);
+                log.error("Error sending hub event", ex);
             }
         });
     }
@@ -79,6 +81,6 @@ public class KafkaEventSender {
     public void close() {
         sensorProducer.close();
         hubProducer.close();
-        log.info("Kafka producers закрыты");
+        log.info("Kafka producers closed");
     }
 }

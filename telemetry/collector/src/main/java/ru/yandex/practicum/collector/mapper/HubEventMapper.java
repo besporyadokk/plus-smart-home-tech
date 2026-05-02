@@ -4,56 +4,64 @@ import lombok.extern.slf4j.Slf4j;
 import ru.yandex.practicum.collector.model.hub.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class HubEventMapper {
+
+    private static final Map<HubEventType, Function<HubEvent, Object>> PAYLOAD_BUILDERS = new EnumMap<>(HubEventType.class);
+
+    static {
+        PAYLOAD_BUILDERS.put(HubEventType.DEVICE_ADDED, event -> {
+            DeviceAddedEvent e = (DeviceAddedEvent) event;
+            return DeviceAddedEventAvro.newBuilder()
+                    .setId(e.getId())
+                    .setType(mapDeviceType(e.getDeviceType()))
+                    .build();
+        });
+
+        PAYLOAD_BUILDERS.put(HubEventType.DEVICE_REMOVED, event -> {
+            DeviceRemovedEvent e = (DeviceRemovedEvent) event;
+            return DeviceRemovedEventAvro.newBuilder()
+                    .setId(e.getId())
+                    .build();
+        });
+
+        PAYLOAD_BUILDERS.put(HubEventType.SCENARIO_ADDED, event -> {
+            ScenarioAddedEvent e = (ScenarioAddedEvent) event;
+            return ScenarioAddedEventAvro.newBuilder()
+                    .setName(e.getName())
+                    .setConditions(e.getConditions().stream()
+                            .map(HubEventMapper::mapCondition)
+                            .collect(Collectors.toList()))
+                    .setActions(e.getActions().stream()
+                            .map(HubEventMapper::mapAction)
+                            .collect(Collectors.toList()))
+                    .build();
+        });
+
+        PAYLOAD_BUILDERS.put(HubEventType.SCENARIO_REMOVED, event -> {
+            ScenarioRemovedEvent e = (ScenarioRemovedEvent) event;
+            return ScenarioRemovedEventAvro.newBuilder()
+                    .setName(e.getName())
+                    .build();
+        });
+    }
 
     public static HubEventAvro toAvro(HubEvent event) {
         HubEventAvro.Builder builder = HubEventAvro.newBuilder()
                 .setHubId(event.getHubId())
                 .setTimestamp(event.getTimestamp());
 
-        switch (event.getType()) {
-
-            case DEVICE_ADDED -> {
-                DeviceAddedEvent e = (DeviceAddedEvent) event;
-                builder.setPayload(DeviceAddedEventAvro.newBuilder()
-                        .setId(e.getId())
-                        .setType(mapDeviceType(e.getDeviceType()))
-                        .build());
-            }
-
-            case DEVICE_REMOVED -> {
-                DeviceRemovedEvent e = (DeviceRemovedEvent) event;
-                builder.setPayload(DeviceRemovedEventAvro.newBuilder()
-                        .setId(e.getId())
-                        .build());
-            }
-
-            case SCENARIO_ADDED -> {
-                ScenarioAddedEvent e = (ScenarioAddedEvent) event;
-                builder.setPayload(ScenarioAddedEventAvro.newBuilder()
-                        .setName(e.getName())
-                        .setConditions(e.getConditions().stream()
-                                .map(HubEventMapper::mapCondition)
-                                .collect(Collectors.toList()))
-                        .setActions(e.getActions().stream()
-                                .map(HubEventMapper::mapAction)
-                                .collect(Collectors.toList()))
-                        .build());
-            }
-
-            case SCENARIO_REMOVED -> {
-                ScenarioRemovedEvent e = (ScenarioRemovedEvent) event;
-                builder.setPayload(ScenarioRemovedEventAvro.newBuilder()
-                        .setName(e.getName())
-                        .build());
-            }
-
-            default -> throw new IllegalArgumentException("Неизвестный тип hub события: " + event.getType());
+        Function<HubEvent, Object> payloadBuilder = PAYLOAD_BUILDERS.get(event.getType());
+        if (payloadBuilder == null) {
+            throw new IllegalArgumentException("Unknown hub event type: " + event.getType());
         }
 
+        builder.setPayload(payloadBuilder.apply(event));
         return builder.build();
     }
 
