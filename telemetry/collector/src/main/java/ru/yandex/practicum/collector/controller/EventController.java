@@ -10,8 +10,7 @@ import ru.yandex.practicum.collector.model.hub.HubEvent;
 import ru.yandex.practicum.collector.model.sensor.SensorEvent;
 import ru.yandex.practicum.collector.service.EventProcessingService;
 
-@RestController
-@RequestMapping("/events")
+
 @RequiredArgsConstructor
 @Slf4j
 public class EventController {
