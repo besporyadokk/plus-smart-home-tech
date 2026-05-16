@@ -10,9 +10,9 @@ import "telemetry/messages/hub_event.proto";
 import "telemetry/messages/sensor_event.proto";
 
 service CollectorController {
-  rpc CollectSensorEvent (telemetry.message.event.SensorEventProto)
+  rpc CollectSensorEvent (message.event.SensorEventProto)
       returns (google.protobuf.Empty);
 
-  rpc CollectHubEvent (telemetry.message.event.HubEventProto)
+  rpc CollectHubEvent (message.event.HubEventProto)
       returns (google.protobuf.Empty);
 }
