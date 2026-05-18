@@ -11,9 +11,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.model.Snapshot;
 import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
+import ru.yandex.practicum.model.Snapshot;
 import ru.yandex.practicum.service.SnapshotProcessingService;
 
 import java.time.Duration;
@@ -72,7 +72,12 @@ public class SnapshotProcessor {
                     log.debug("Committed offsets for {} snapshot records", records.count());
                 } else {
                     log.warn("Skipping commit due to processing error");
-                    try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
                 }
             }
         } catch (WakeupException e) {
@@ -95,13 +100,13 @@ public class SnapshotProcessor {
                 avroSnapshot.getSensorsState().forEach((sensorId, sensorState) -> {
                     Object value = extractSensorValue(sensorState);
                     if (value != null) {
-                        sensorValues.put(sensorId.toString(), value);
+                        sensorValues.put(sensorId, value);
                     }
                 });
             }
 
             return Snapshot.builder()
-                    .hubId(avroSnapshot.getHubId().toString())
+                    .hubId(avroSnapshot.getHubId())
                     .sensorValues(sensorValues)
                     .build();
         } catch (Exception e) {
@@ -117,9 +122,9 @@ public class SnapshotProcessor {
         try {
             return switch (className) {
                 case "MotionSensorAvro" -> data.getClass().getMethod("getMotion").invoke(data);
-                case "TemperatureSensorAvro" -> data.getClass().getMethod("getTemperatureC").invoke(data);
+                case "TemperatureSensorAvro", "ClimateSensorAvro" ->
+                        data.getClass().getMethod("getTemperatureC").invoke(data);
                 case "LightSensorAvro" -> data.getClass().getMethod("getLuminosity").invoke(data);
-                case "ClimateSensorAvro" -> data.getClass().getMethod("getTemperatureC").invoke(data);
                 case "SwitchSensorAvro" -> data.getClass().getMethod("getState").invoke(data);
                 default -> null;
             };

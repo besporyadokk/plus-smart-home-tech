@@ -11,13 +11,21 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
+import ru.yandex.practicum.grpc.telemetry.event.ConditionOperationProto;
+import ru.yandex.practicum.grpc.telemetry.event.ConditionTypeProto;
 import ru.yandex.practicum.kafka.telemetry.event.*;
-import ru.yandex.practicum.model.*;
-import ru.yandex.practicum.grpc.telemetry.event.*;
-import ru.yandex.practicum.repository.*;
+import ru.yandex.practicum.model.Action;
+import ru.yandex.practicum.model.Condition;
+import ru.yandex.practicum.model.Scenario;
+import ru.yandex.practicum.model.Sensor;
+import ru.yandex.practicum.repository.ScenarioRepository;
+import ru.yandex.practicum.repository.SensorRepository;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,8 +35,6 @@ public class HubEventProcessor implements Runnable {
 
     private final SensorRepository sensorRepository;
     private final ScenarioRepository scenarioRepository;
-    private final ConditionRepository conditionRepository;
-    private final ActionRepository actionRepository;
 
     @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -72,7 +78,12 @@ public class HubEventProcessor implements Runnable {
                     log.debug("Hub events committed, count: {}", records.count());
                 } else {
                     log.warn("Skipping commit due to errors");
-                    try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
                 }
             }
         } catch (WakeupException e) {
@@ -98,39 +109,49 @@ public class HubEventProcessor implements Runnable {
     }
 
     private void processHubEvent(HubEventAvro event) {
-        String hubId = event.getHubId().toString();
+        String hubId = event.getHubId();
         Object payload = event.getPayload();
 
-        if (payload instanceof DeviceAddedEventAvro) {
-            handleDeviceAdded(hubId, (DeviceAddedEventAvro) payload);
-        } else if (payload instanceof DeviceRemovedEventAvro) {
-            handleDeviceRemoved(hubId, (DeviceRemovedEventAvro) payload);
-        } else if (payload instanceof ScenarioAddedEventAvro) {
-            handleScenarioAdded(hubId, (ScenarioAddedEventAvro) payload);
-        } else if (payload instanceof ScenarioRemovedEventAvro) {
-            handleScenarioRemoved(hubId, (ScenarioRemovedEventAvro) payload);
-        } else {
-            log.warn("Unknown hub event payload type: {}", payload.getClass().getSimpleName());
+        switch (payload) {
+            case DeviceAddedEventAvro deviceAdded -> handleDeviceAdded(hubId, deviceAdded);
+            case DeviceRemovedEventAvro deviceRemoved -> handleDeviceRemoved(hubId, deviceRemoved);
+            case ScenarioAddedEventAvro scenarioAdded -> handleScenarioAdded(hubId, scenarioAdded);
+            case ScenarioRemovedEventAvro scenarioRemoved -> handleScenarioRemoved(hubId, scenarioRemoved);
+            default -> log.warn("Unknown hub event payload type: {}", payload.getClass().getSimpleName());
         }
     }
 
     private void handleDeviceAdded(String hubId, DeviceAddedEventAvro device) {
-        String sensorId = device.getId().toString();
-        Sensor sensor = sensorRepository.findById(sensorId).orElse(new Sensor());
-        sensor.setId(sensorId);
-        sensor.setHubId(hubId);
-        sensorRepository.save(sensor);
-        log.info("Device added/updated: id={}, hubId={}, type={}", sensorId, hubId, device.getType());
+        String sensorId = device.getId();
+        Optional<Sensor> existingSensor = sensorRepository.findById(sensorId);
+
+        if (existingSensor.isPresent()) {
+            Sensor sensor = existingSensor.get();
+            if (!sensor.getHubId().equals(hubId)) {
+                log.warn("Device {} already exists but in different hub (current: {}, new: {}). Updating hubId.",
+                        sensorId, sensor.getHubId(), hubId);
+                sensor.setHubId(hubId);
+                sensorRepository.save(sensor);
+            } else {
+                log.info("Device {} already exists in hub {}, no changes needed.", sensorId, hubId);
+            }
+        } else {
+            Sensor sensor = new Sensor();
+            sensor.setId(sensorId);
+            sensor.setHubId(hubId);
+            sensorRepository.save(sensor);
+            log.info("Device added: id={}, hubId={}, type={}", sensorId, hubId, device.getType());
+        }
     }
 
     private void handleDeviceRemoved(String hubId, DeviceRemovedEventAvro device) {
-        String sensorId = device.getId().toString();
+        String sensorId = device.getId();
         sensorRepository.deleteById(sensorId);
         log.info("Device removed: id={}, hubId={}", sensorId, hubId);
     }
 
     private void handleScenarioAdded(String hubId, ScenarioAddedEventAvro scenarioProto) {
-        String scenarioName = scenarioProto.getName().toString();
+        String scenarioName = scenarioProto.getName();
         scenarioRepository.findByHubIdAndName(hubId, scenarioName)
                 .ifPresent(existing -> {
                     scenarioRepository.delete(existing);
@@ -147,7 +168,6 @@ public class HubEventProcessor implements Runnable {
                     condition.setType(mapConditionType(condProto.getType()));
                     condition.setOperation(mapOperation(condProto.getOperation()));
 
-                    // Извлекаем значение, поддерживая и Boolean, и Integer
                     Object value = condProto.getValue();
                     if (value instanceof Integer) {
                         condition.setValue((Integer) value);
@@ -157,7 +177,7 @@ public class HubEventProcessor implements Runnable {
                         throw new IllegalArgumentException("Unexpected condition value type: " + value.getClass());
                     }
 
-                    String sensorId = condProto.getSensorId().toString();
+                    String sensorId = condProto.getSensorId();
                     Sensor sensor = sensorRepository.findById(sensorId)
                             .orElseThrow(() -> new RuntimeException("Sensor not found: " + sensorId));
                     condition.setSensor(sensor);
@@ -169,7 +189,7 @@ public class HubEventProcessor implements Runnable {
                 .map(actProto -> {
                     Action action = new Action();
                     action.setType(mapActionType(actProto.getType()));
-                    action.setSensorId(actProto.getSensorId().toString());
+                    action.setSensorId(actProto.getSensorId());
                     action.setValue(actProto.getValue());
                     action.setScenario(scenario);
                     return action;
@@ -182,7 +202,7 @@ public class HubEventProcessor implements Runnable {
     }
 
     private void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro scenarioProto) {
-        String name = scenarioProto.getName().toString();
+        String name = scenarioProto.getName();
         scenarioRepository.findByHubIdAndName(hubId, name)
                 .ifPresent(scenario -> {
                     scenarioRepository.delete(scenario);

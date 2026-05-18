@@ -17,24 +17,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class AggregationService {
 
-
-    private final Map<String, SensorsSnapshotAvro> snapshots = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, SensorStateAvro>> snapshots = new ConcurrentHashMap<>();
 
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
-        String hubId = event.getHubId().toString();
-        String sensorId = event.getId().toString();
+        String hubId = event.getHubId();
+        String sensorId = event.getId();
         long eventTimestamp = event.getTimestamp().toEpochMilli();
 
-        SensorsSnapshotAvro snapshot = snapshots.get(hubId);
-        Map<String, SensorStateAvro> newSensorsState = new HashMap<>();
+        Map<String, SensorStateAvro> sensorStates = snapshots.computeIfAbsent(hubId, k -> new HashMap<>());
 
-        if (snapshot != null) {
-
-            snapshot.getSensorsState().forEach((key, value) -> newSensorsState.put(key.toString(), value));
-            log.info("Created new snapshot for hub: {}", hubId);
-        }
-
-        SensorStateAvro oldState = newSensorsState.get(sensorId);
+        SensorStateAvro oldState = sensorStates.get(sensorId);
         if (oldState != null && oldState.getTimestamp() > eventTimestamp) {
             log.debug("Ignoring outdated event for sensor: {}, event timestamp: {}, snapshot timestamp: {}",
                     sensorId, eventTimestamp, oldState.getTimestamp());
@@ -50,15 +42,14 @@ public class AggregationService {
                 .setData(event.getPayload())
                 .build();
 
-        newSensorsState.put(sensorId, newState);
+        sensorStates.put(sensorId, newState);
 
         SensorsSnapshotAvro updatedSnapshot = SensorsSnapshotAvro.newBuilder()
                 .setHubId(hubId)
                 .setTimestamp(eventTimestamp)
-                .setSensorsState(newSensorsState)
+                .setSensorsState(sensorStates)
                 .build();
 
-        snapshots.put(hubId, updatedSnapshot);
         log.info("Updated snapshot for hub: {}, sensor: {}, timestamp: {}", hubId, sensorId, eventTimestamp);
         return Optional.of(updatedSnapshot);
     }

@@ -6,9 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.client.HubRouterClient;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.model.Scenario;
 import ru.yandex.practicum.model.Snapshot;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.repository.ScenarioRepository;
 
 import java.util.List;
@@ -28,8 +28,6 @@ public class SnapshotProcessingService {
         log.debug("Found {} scenarios for hubId={}", scenarios.size(), snapshot.getHubId());
 
         for (Scenario scenario : scenarios) {
-            scenario.getConditions().size();
-            scenario.getActions().size();
 
             List<DeviceActionProto> actions = scenarioExecutor.evaluateScenario(scenario, snapshot);
             if (!actions.isEmpty()) {

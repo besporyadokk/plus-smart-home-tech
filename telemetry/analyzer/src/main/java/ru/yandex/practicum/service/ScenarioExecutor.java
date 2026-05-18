@@ -2,10 +2,10 @@ package ru.yandex.practicum.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.model.Condition;
 import ru.yandex.practicum.model.Scenario;
 import ru.yandex.practicum.model.Snapshot;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 
 import java.util.Collections;
 import java.util.List;

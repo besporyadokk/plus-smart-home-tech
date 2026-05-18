@@ -66,7 +66,8 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/../serialization/avro-schemas/target/generated-sources</source>
+                                <source>${project.basedir}/../serialization/avro-schemas/target/generated-sources
+                                </source>
                             </sources>
                         </configuration>
                     </execution>

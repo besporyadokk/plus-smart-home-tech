@@ -30,5 +30,6 @@ public abstract class BaseAvroSerializer<T extends SpecificRecordBase> implement
     }
 
     @Override
-    public void close() {}
+    public void close() {
+    }
 }

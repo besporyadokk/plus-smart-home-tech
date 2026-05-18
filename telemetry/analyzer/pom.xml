@@ -122,7 +122,9 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/../serialization/proto-schemas/target/generated-sources/protobuf</source>
+                                <source>
+                                    ${project.basedir}/../serialization/proto-schemas/target/generated-sources/protobuf
+                                </source>
                             </sources>
                         </configuration>
                     </execution>
