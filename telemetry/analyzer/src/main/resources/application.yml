@@ -1,0 +1,41 @@
+server:
+  port: 8084
+
+grpc:
+  client:
+    hub-router:
+      address: 'static://localhost:59090'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analyzer
+    username: postgres
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        enable_lazy_load_no_trans: true
+
+kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    snapshot:
+      group-id: analyzer-snapshot-group
+      auto-offset-reset: latest
+      enable-auto-commit: false
+    hub-event:
+      group-id: analyzer-hub-group
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+
+logging:
+  level:
+    ru.yandex.practicum: DEBUG
+    net.devh.boot.grpc: DEBUG
