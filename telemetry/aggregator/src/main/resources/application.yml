@@ -1,9 +1,10 @@
 spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-
-logging:
-  level:
-    root: INFO
-    ru.practicum: DEBUG
-    org.apache.kafka: INFO
+  application:
+    name: aggregator
+  config:
+    import: configserver:http://localhost:8888
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
