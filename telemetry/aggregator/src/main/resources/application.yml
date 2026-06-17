@@ -2,20 +2,28 @@ spring:
   application:
     name: aggregator
   config:
-    import: "configserver:"
+    import: optional:configserver:http://localhost:8888
   cloud:
     config:
-      discovery:
-        enabled: true
-        service-id: config-server
-      fail-fast: true
+      fail-fast: false
       retry:
         useRandomPolicy: true
-        max-interval: 6000
+        max-interval: 30000
+        initial-interval: 5000
+        multiplier: 2.0
+        max-attempts: 10
+  kafka:
+    bootstrap-servers: localhost:9092
+
+server:
+  port: 8083
+
+logging:
+  level:
+    root: INFO
+    ru.practicum: DEBUG
+    org.apache.kafka: INFO
 
 eureka:
   client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-    registerWithEureka: true
-    fetchRegistry: true
+    enabled: false
