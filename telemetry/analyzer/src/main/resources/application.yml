@@ -2,20 +2,56 @@ spring:
   application:
     name: analyzer
   config:
-    import: "configserver:"
+    import: optional:configserver:http://localhost:8888
   cloud:
     config:
-      discovery:
-        enabled: true
-        service-id: config-server
-      fail-fast: true
+      fail-fast: false
       retry:
         useRandomPolicy: true
-        max-interval: 6000
+        max-interval: 30000
+        initial-interval: 5000
+        multiplier: 2.0
+        max-attempts: 10
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analyzer
+    username: postgres
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        enable_lazy_load_no_trans: true
+
+server:
+  port: 8084
+
+grpc:
+  client:
+    hub-router:
+      address: 'static://localhost:59090'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
+kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    snapshot:
+      group-id: analyzer-snapshot-group
+      auto-offset-reset: latest
+      enable-auto-commit: false
+    hub-event:
+      group-id: analyzer-hub-group
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+
+logging:
+  level:
+    ru.yandex.practicum: DEBUG
+    net.devh.boot.grpc: DEBUG
 
 eureka:
   client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-    registerWithEureka: true
-    fetchRegistry: true
+    enabled: false
