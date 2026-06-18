@@ -9,10 +9,8 @@ spring:
         native:
           searchLocations:
             - classpath:telemetry/{application}
-
 server:
-  port: 0
-
+  port: 8888
 eureka:
   client:
     registerWithEureka: true

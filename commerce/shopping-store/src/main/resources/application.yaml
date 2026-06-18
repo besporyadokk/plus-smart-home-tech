@@ -12,17 +12,6 @@ spring:
         initial-interval: 5000
         multiplier: 2.0
         max-attempts: 10
-  datasource:
-    url: jdbc:postgresql://localhost:5433/shopping_store
-    username: postgres
-    password: password
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: 0
