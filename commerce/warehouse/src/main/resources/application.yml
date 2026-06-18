@@ -12,19 +12,6 @@ spring:
         initial-interval: 5000
         multiplier: 2.0
         max-attempts: 10
-  datasource:
-    url: jdbc:postgresql://localhost:5435/warehouse
-    username: postgres
-    password: password
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
 
 server:
   port: 0
@@ -33,13 +20,3 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-  instance:
-    preferIpAddress: true
-    hostname: localhost
-    instance-id: ${spring.application.name}:${server.port}
-
-logging:
-  level:
-    ru.yandex.practicum: DEBUG
