@@ -1,3 +1,29 @@
+spring:
+  application:
+    name: analyzer
+  config:
+    import: optional:configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: false
+      retry:
+        useRandomPolicy: true
+        max-interval: 30000
+        initial-interval: 5000
+        multiplier: 2.0
+        max-attempts: 10
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analyzer
+    username: postgres
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        enable_lazy_load_no_trans: true
+
 server:
   port: 8084
 
@@ -8,20 +34,6 @@ grpc:
       enableKeepAlive: true
       keepAliveWithoutCalls: true
       negotiationType: plaintext
-
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/analyzer
-    username: postgres
-    password: password
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        enable_lazy_load_no_trans: true
 
 kafka:
   bootstrap-servers: localhost:9092
@@ -39,3 +51,7 @@ logging:
   level:
     ru.yandex.practicum: DEBUG
     net.devh.boot.grpc: DEBUG
+
+eureka:
+  client:
+    enabled: false

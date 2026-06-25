@@ -1,9 +1,29 @@
 spring:
+  application:
+    name: aggregator
+  config:
+    import: optional:configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: false
+      retry:
+        useRandomPolicy: true
+        max-interval: 30000
+        initial-interval: 5000
+        multiplier: 2.0
+        max-attempts: 10
   kafka:
     bootstrap-servers: localhost:9092
+
+server:
+  port: 8083
 
 logging:
   level:
     root: INFO
     ru.practicum: DEBUG
     org.apache.kafka: INFO
+
+eureka:
+  client:
+    enabled: false

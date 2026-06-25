@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: warehouse
+  config:
+    import: optional:configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: false
+      retry:
+        useRandomPolicy: true
+        max-interval: 30000
+        initial-interval: 5000
+        multiplier: 2.0
+        max-attempts: 10
+
+server:
+  port: 0
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

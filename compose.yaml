@@ -58,5 +58,72 @@ services:
                              --partitions 1 --replication-factor 1 --if-not-exists \
                              --bootstrap-server kafka:29092'"
 
+  postgres-shopping-store:
+    image: postgres:16
+    container_name: postgres-shopping-store
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: shopping_store
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_shopping_store_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - commerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shopping_store"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-shopping-cart:
+    image: postgres:16
+    container_name: postgres-shopping-cart
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: shopping_cart
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_shopping_cart_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - commerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shopping_cart"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-warehouse:
+    image: postgres:16
+    container_name: postgres-warehouse
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_warehouse_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - commerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d warehouse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  commerce-network:
+    driver: bridge
+
 volumes:
   postgres_data:
+  postgres_shopping_store_data:
+  postgres_shopping_cart_data:
+  postgres_warehouse_data:

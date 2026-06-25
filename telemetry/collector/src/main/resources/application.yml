@@ -1,9 +1,27 @@
 spring:
   application:
     name: collector
+  config:
+    import: optional:configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: false
+      retry:
+        useRandomPolicy: true
+        max-interval: 30000
+        initial-interval: 5000
+        multiplier: 2.0
+        max-attempts: 10
   kafka:
     bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: ru.practicum.kafka.serialization.CustomSensorEventSerializer
+      properties:
+        enable-idempotence: false
+        acks: all
 
+# Настройки, которые нужны конкретным бинам Collector
 collector:
   kafka:
     topics:
@@ -11,7 +29,7 @@ collector:
       hubs: telemetry.hubs.v1
 
 server:
-  port: 8080
+  port: 8082
 
 grpc:
   server:
@@ -19,4 +37,12 @@ grpc:
 
 logging:
   level:
-    ru.yandex.practicum: DEBUG
+    root: INFO
+    ru.practicum: DEBUG
+    ru.practicum.kafka.serialization: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: INFO
+
+eureka:
+  client:
+    enabled: false
