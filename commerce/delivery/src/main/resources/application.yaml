@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: delivery
+  config:
+    import: configserver:http://localhost:8888
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        retry:
+          useRandomPolicy: true
+          max-interval: 30000
+          initial-interval: 5000
+          multiplier: 2.0
+          max-attempts: 10
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

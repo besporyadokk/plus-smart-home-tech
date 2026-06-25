@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: gateway
+  config:
+    import: optional:configserver:http://localhost:8888
+    config:
+      fail-fast: false
+      retry:
+        useRandomPolicy: true
+        max-interval: 30000
+        initial-interval: 5000
+        multiplier: 2.0
+        max-attempts: 10
+
+  cloud:
+    gateway:
+      routes:
+        - id: shopping_store_route
+          uri: lb://SHOPPING-STORE
+          predicates:
+            - Path=/shopping-store/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: shopping_cart_route
+          uri: lb://SHOPPING-CART
+          predicates:
+            - Path=/shopping-cart/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: warehouse_route
+          uri: lb://WAREHOUSE
+          predicates:
+            - Path=/warehouse/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: order_route
+          uri: lb://ORDER
+          predicates:
+            - Path=/order/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: payment_route
+          uri: lb://PAYMENT
+          predicates:
+            - Path=/payment/**
+          filters:
+            - PrefixPath=/api/v1
+
+        - id: delivery_route
+          uri: lb://DELIVERY
+          predicates:
+            - Path=/delivery/**
+          filters:
+            - PrefixPath=/api/v1
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    preferIpAddress: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.config: DEBUG
