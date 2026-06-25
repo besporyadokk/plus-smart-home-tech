@@ -1,0 +1,25 @@
+#spring:
+#  cloud:
+#    gateway:
+#      routes:
+#        - id: shopping_store_route
+#          uri: lb://SHOPPING-STORE
+#          predicates:
+#            - Path=/shopping-store/**
+#          filters:
+#            - PrefixPath=/api/v1
+#            - Retry=3
+#
+#        - id: shopping_cart_route
+#          uri: lb://SHOPPING-CART
+#          predicates:
+#            - Path=/shopping-cart/**
+#          filters:
+#            - PrefixPath=/api/v1
+#
+#server:
+#  port: 8080
+#
+#logging:
+#  level:
+#    org.springframework.cloud.gateway: DEBUG

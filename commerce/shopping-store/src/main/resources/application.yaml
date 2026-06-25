@@ -2,19 +2,17 @@ spring:
   application:
     name: shopping-store
   config:
-    import: optional:configserver:http://localhost:8888
-  cloud:
+    import: configserver:http://localhost:8888
     config:
-      fail-fast: false
+      fail-fast: true
       retry:
         useRandomPolicy: true
-        max-interval: 30000
-        initial-interval: 5000
-        multiplier: 2.0
-        max-attempts: 10
-
-server:
-  port: 0
+        retry:
+          useRandomPolicy: true
+          max-interval: 30000
+          initial-interval: 5000
+          multiplier: 2.0
+          max-attempts: 10
 
 eureka:
   client:

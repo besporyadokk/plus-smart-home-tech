@@ -9,6 +9,9 @@ import ru.yandex.practicum.dto.*;
 import ru.yandex.practicum.feign.WarehouseClient;
 import ru.yandex.practicum.service.WarehouseService;
 
+import java.util.Map;
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/warehouse")
@@ -46,5 +49,32 @@ public class WarehouseController implements WarehouseClient {
 
         AddressDto address = warehouseService.getWarehouseAddress();
         return ResponseEntity.ok(address);
+    }
+
+    @PostMapping("/assembly")
+    public ResponseEntity<BookedProductsDto> assemblyProductsForOrder(
+            @Valid @RequestBody AssemblyProductsForOrderRequest request) {
+
+        log.debug("POST /api/v1/warehouse/assembly - orderId: {}", request.getOrderId());
+        BookedProductsDto result = warehouseService.assemblyProductsForOrder(request);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/shipped")
+    public ResponseEntity<Void> shippedToDelivery(
+            @Valid @RequestBody ShippedToDeliveryRequest request) {
+
+        log.debug("POST /api/v1/warehouse/shipped - orderId: {}, deliveryId: {}",
+                request.getOrderId(), request.getDeliveryId());
+        warehouseService.shippedToDelivery(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/return")
+    public ResponseEntity<Void> acceptReturn(@RequestBody Map<UUID, Integer> products) {
+
+        log.debug("POST /api/v1/warehouse/return - products: {}", products);
+        warehouseService.acceptReturn(products);
+        return ResponseEntity.ok().build();
     }
 }

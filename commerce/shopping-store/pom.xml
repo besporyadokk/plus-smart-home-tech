@@ -50,7 +50,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok - обновляем версию и меняем scope на provided -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

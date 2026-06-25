@@ -1,9 +1,9 @@
 package ru.yandex.practicum.dto;
 
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
